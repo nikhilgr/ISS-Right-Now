@@ -16,6 +16,7 @@ Then open the local URL printed by Vite.
 ## Checks
 
 ```bash
+pnpm install --frozen-lockfile
 pnpm run test
 pnpm run build
 pnpm run preview
