@@ -480,3 +480,154 @@
   .loc-prompt .suggestions li .name { color: var(--ink); }
   .loc-prompt .suggestions li.hi .name { color: var(--accent); }
   .loc-prompt .suggestions li .country { font-size: 10px; letter-spacing: 0.16em; color: var(--ink-mute); text-transform: uppercase; }
+
+  @media (max-width: 900px) {
+    .panel-scrim {
+      position: fixed;
+      place-items: start center;
+      overflow-y: auto;
+      padding: max(16px, env(safe-area-inset-top))
+               max(14px, env(safe-area-inset-right))
+               max(36px, env(safe-area-inset-bottom))
+               max(14px, env(safe-area-inset-left));
+      backdrop-filter: blur(8px);
+      -webkit-overflow-scrolling: touch;
+    }
+    .panel {
+      width: min(100%, 560px);
+      max-height: none;
+      min-height: auto;
+      padding: 26px 22px 30px;
+      margin: 0 auto;
+      transform: translateY(6px);
+    }
+    .panel header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: start;
+      gap: 18px;
+      margin-bottom: 28px;
+    }
+    .panel h2 {
+      font-size: clamp(34px, 10.4vw, 46px);
+      line-height: 1.02;
+      letter-spacing: -0.012em;
+    }
+    .panel h2 em {
+      display: inline;
+      white-space: nowrap;
+    }
+    .panel .close {
+      min-height: 44px;
+      min-width: 44px;
+      padding: 8px 0 8px 10px;
+      text-align: right;
+      font-size: 10px;
+      line-height: 1.25;
+    }
+    .panel .loc {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-bottom: 22px;
+      font-size: 11px;
+      letter-spacing: 0.22em;
+    }
+    .panel .loc .where {
+      font-size: 12px;
+      line-height: 1.6;
+      letter-spacing: 0.2em;
+    }
+    .panel .loc .change {
+      width: fit-content;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+    }
+    .panel .tz-toggle {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-bottom: 28px;
+      font-size: 10px;
+    }
+    .panel .tz-toggle button {
+      width: 100%;
+      min-height: 44px;
+      padding: 12px 14px;
+      text-align: center;
+    }
+    .pass-list li {
+      grid-template-columns: 34px minmax(0, 1fr);
+      gap: 12px 14px;
+      align-items: start;
+      padding: 22px 0;
+    }
+    .pass-list li .idx {
+      padding-top: 8px;
+      font-size: 10px;
+    }
+    .pass-list li .when {
+      min-width: 0;
+      gap: 8px;
+    }
+    .pass-list li .date {
+      font-size: 28px;
+      line-height: 1.05;
+    }
+    .pass-list li .rel {
+      font-size: 10px;
+      line-height: 1.55;
+      letter-spacing: 0.14em;
+    }
+    .pass-list li .meta {
+      grid-column: 2;
+      text-align: left;
+      font-size: 11px;
+      line-height: 1.55;
+      letter-spacing: 0.08em;
+    }
+    .panel .visibility-note {
+      font-size: 10px;
+      line-height: 1.75;
+      margin-top: 20px;
+    }
+    .loc-prompt {
+      gap: 16px;
+      padding: 8px 0 4px;
+    }
+    .loc-prompt .pq {
+      font-size: 28px;
+      line-height: 1.08;
+    }
+    .loc-prompt .row {
+      flex-wrap: wrap;
+    }
+    .loc-prompt .combobox {
+      width: 100%;
+      min-width: 0;
+    }
+    .loc-prompt input {
+      min-height: 48px;
+      font-size: 12px;
+    }
+    .loc-prompt button {
+      width: 100%;
+      min-height: 48px;
+    }
+    .loc-prompt .suggestions {
+      max-height: min(280px, 46dvh);
+    }
+  }
+
+  @media (max-width: 390px) {
+    .panel {
+      padding: 24px 18px 28px;
+    }
+    .panel h2 {
+      font-size: clamp(31px, 9.7vw, 38px);
+    }
+    .pass-list li .date {
+      font-size: 25px;
+    }
+  }

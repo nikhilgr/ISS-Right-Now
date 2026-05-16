@@ -432,7 +432,7 @@ function App() {
         </div>
       )}
 
-      {!followingISS && (
+      {!followingISS && !passPanel && (
         <button
           className="recentre-btn"
           onClick={() => setFollowingISS(true)}
