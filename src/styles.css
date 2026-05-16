@@ -156,6 +156,7 @@
   .pass-btn:hover { filter: brightness(1.08); box-shadow: 0 0 56px var(--accent-glow); transform: translateY(-1px); }
   .pass-btn .arrow { display: inline-block; margin-left: 14px; transition: transform 220ms ease; }
   .pass-btn:hover .arrow { transform: translateX(6px); }
+  .mobile-globe-spacer { display: none; }
 
   /* Bottom band is now empty by default — Re-centre lives outside the
      overlay, footer chrome moved into the rail. */
@@ -197,29 +198,89 @@
      desktop layout (everything is scoped inside the media query, and the
      `env(safe-area-inset-*)` values resolve to 0 on non-notched devices). */
   @media (max-width: 900px) {
+    html, body { height: auto; min-height: 100%; overflow-x: hidden; overflow-y: auto; }
+    #app { width: 100%; min-height: 100dvh; height: auto; overflow: hidden; }
+    .stage {
+      position: absolute;
+      inset: auto 0 auto 0;
+      top: clamp(510px, 73dvh, 620px);
+      height: min(430px, 88vw);
+      z-index: 1;
+      pointer-events: auto;
+    }
+    .stage canvas { max-width: 100%; touch-action: pan-y; }
+
     /* Pad with safe-area insets so the overlay clears iOS notches / home
        indicator / Android gesture areas. */
     .overlay {
-      padding: max(22px, env(safe-area-inset-top))
+      position: relative;
+      min-height: 100dvh;
+      padding: max(28px, env(safe-area-inset-top))
                max(22px, env(safe-area-inset-right))
-               max(22px, env(safe-area-inset-bottom))
+               max(48px, env(safe-area-inset-bottom))
                max(22px, env(safe-area-inset-left));
-      gap: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+      pointer-events: none;
     }
-    .center { grid-template-columns: 1fr; gap: 28px; }
-    .lede { max-width: 100%; gap: 28px; }
-    .lede h1 .place { white-space: normal; }     /* long ocean names may wrap */
-    .lede h1 .learn-more { white-space: nowrap; } /* chip stays as a unit */
-    .rail { max-width: 100%; justify-self: stretch; }
-    .rail .footnote { text-align: left; justify-content: flex-start; }
+    .center {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      align-items: stretch;
+    }
+    .lede { max-width: 100%; gap: 24px; }
+    .lede .label { font-size: 11px; letter-spacing: 0.24em; }
+    .lede h1 {
+      font-size: clamp(38px, 12.5vw, 54px);
+      line-height: 1.05;
+      max-width: 11.5ch;
+      text-wrap: pretty;
+    }
+    .lede h1 .place { white-space: normal; }
+    .lede h1 .learn-more {
+      display: flex;
+      width: fit-content;
+      margin: 16px 0 0;
+      white-space: nowrap;
+    }
+    .pass-btn {
+      width: 100%;
+      justify-content: center;
+      padding: 22px 24px;
+      min-height: 82px;
+      font-size: 13px;
+      letter-spacing: 0.22em;
+    }
+    .mobile-globe-spacer {
+      display: block;
+      height: min(430px, 88vw);
+      margin: 34px 0 34px;
+      border-bottom: 1px solid var(--accent-dim);
+    }
+    .rail {
+      max-width: 100%;
+      justify-self: stretch;
+      position: relative;
+      z-index: 2;
+      background: linear-gradient(180deg, rgba(5,7,10,0.72), rgba(5,7,10,0.94));
+      backdrop-filter: blur(2px);
+      padding-bottom: 16px;
+    }
+    .rail .stat { padding: 18px 0; gap: 18px; }
+    .rail .stat .k { font-size: 12px; letter-spacing: 0.28em; }
+    .rail .stat .v { font-size: 34px; }
+    .rail .stat.hero { padding-top: 22px; }
+    .rail .stat.hero .v { font-size: 54px; }
+    .rail .footnote { text-align: left; justify-content: flex-start; margin-top: 24px; }
 
     /* Brand and live-status stack on narrow viewports so neither truncates. */
-    .top { flex-wrap: wrap; gap: 12px 16px; }
+    .top { flex-direction: column; gap: 18px; }
     .status { width: auto; }
 
     /* Tap targets bumped to ≥44px so they're comfortable on touch. */
     .rail .footnote .unit-toggle button { padding: 12px 18px; font-size: 12px; min-height: 44px; }
-    .pass-btn { padding: 18px 28px; min-height: 52px; }
 
     /* Pass-times modal trims padding and shrinks heading for phone widths. */
     .panel { padding: 28px 22px; max-height: calc(100dvh - 32px); overflow-y: auto; }
@@ -239,6 +300,31 @@
     .loc-prompt .combobox { width: 100%; min-width: 0; }
     .loc-prompt button { width: 100%; min-height: 48px; }
     .loc-prompt .suggestions { max-height: min(280px, 50dvh); }
+    .recentre-btn {
+      position: fixed;
+      left: 50%;
+      bottom: max(16px, env(safe-area-inset-bottom));
+      padding: 12px 14px;
+      font-size: 10px;
+      z-index: 60;
+    }
+  }
+
+  @media (max-width: 430px) {
+    .stage {
+      top: clamp(500px, 72dvh, 590px);
+      height: min(390px, 92vw);
+    }
+    .lede h1 {
+      font-size: clamp(36px, 11.5vw, 48px);
+      max-width: 10.5ch;
+    }
+    .mobile-globe-spacer {
+      height: min(390px, 92vw);
+      margin: 30px 0 30px;
+    }
+    .rail .stat .v { font-size: 31px; }
+    .rail .stat.hero .v { font-size: 48px; }
   }
 
   /* Coarse-pointer fallback — catches tablets in landscape that exceed

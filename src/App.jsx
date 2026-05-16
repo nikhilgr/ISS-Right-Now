@@ -473,6 +473,8 @@ function App() {
             </button>
           </div>
 
+          <div className="mobile-globe-spacer" aria-hidden="true" />
+
           <aside className="rail">
             <div className="stat hero">
               <div className="k">Speed</div>
