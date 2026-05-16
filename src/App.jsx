@@ -405,18 +405,6 @@ function App() {
   // ── render ──
   return (
     <>
-      <div className="stage">
-        <Globe
-          iss={issNow}
-          propagator={propagator}
-          observer={settings.showObserver ? observer : null}
-          observerVisible={settings.showObserver}
-          accent={ACCENT}
-          following={followingISS}
-          onDragStart={() => setFollowingISS(false)}
-        />
-      </div>
-
       {!followingISS && (
         <button
           className="recentre-btn"
@@ -473,7 +461,17 @@ function App() {
             </button>
           </div>
 
-          <div className="mobile-globe-spacer" aria-hidden="true" />
+          <div className="stage">
+            <Globe
+              iss={issNow}
+              propagator={propagator}
+              observer={settings.showObserver ? observer : null}
+              observerVisible={settings.showObserver}
+              accent={ACCENT}
+              following={followingISS}
+              onDragStart={() => setFollowingISS(false)}
+            />
+          </div>
 
           <aside className="rail">
             <div className="stat hero">

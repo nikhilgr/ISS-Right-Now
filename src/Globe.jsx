@@ -326,10 +326,10 @@ export function Globe({ iss, propagator, observer, observerVisible, accent = "#5
     s.renderer.setSize(size.w, size.h);
     const aspect = size.w / size.h;
     s.camera.aspect = aspect;
-    // Keep the globe large on wide monitors, then step it down on laptop
-    // widths so the absolute overlay columns do not collide with the sphere.
+    // Keep the globe large on wide monitors, step it down on laptops, and
+    // fill more of the dedicated in-flow globe slot on phones.
     const fovRad = s.camera.fov * Math.PI / 180;
-    const targetFill = size.w <= 1350 ? 0.54 : size.w <= 1700 ? 0.58 : size.w <= 1900 ? 0.68 : 0.78;
+    const targetFill = size.w <= 900 ? 0.82 : size.w <= 1350 ? 0.54 : size.w <= 1700 ? 0.58 : size.w <= 1900 ? 0.68 : 0.78;
     const dY = 1 / (Math.tan(fovRad / 2) * targetFill);
     const dX = 1 / (Math.tan(fovRad / 2) * aspect * targetFill);
     s.camera.position.z = Math.max(dY, dX, 3);
