@@ -1,0 +1,297 @@
+:root {
+    --bg: #05070a;
+    --bg-2: #0a0e15;
+    --ink: #f4f5f7;
+    --ink-dim: #8a94a6;
+    --ink-mute: #4a5364;
+    --accent: #5cf0ff;
+    --accent-dim: rgba(92, 240, 255, 0.35);
+    --accent-glow: rgba(92, 240, 255, 0.18);
+    --grid: rgba(255,255,255,0.045);
+    --land: rgba(255,255,255,0.10);
+    --land-edge: rgba(255,255,255,0.18);
+    --hairline: rgba(255,255,255,0.08);
+    --serif: "Instrument Serif", "Times New Roman", serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); color: var(--ink); font-family: var(--mono); -webkit-font-smoothing: antialiased; overflow: hidden; }
+
+  /* Subtle starfield */
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(1px 1px at 12% 18%, rgba(255,255,255,.55), transparent 60%),
+      radial-gradient(1px 1px at 28% 72%, rgba(255,255,255,.4), transparent 60%),
+      radial-gradient(1px 1px at 41% 33%, rgba(255,255,255,.6), transparent 60%),
+      radial-gradient(1px 1px at 56% 88%, rgba(255,255,255,.35), transparent 60%),
+      radial-gradient(1px 1px at 67% 12%, rgba(255,255,255,.5), transparent 60%),
+      radial-gradient(1px 1px at 78% 54%, rgba(255,255,255,.45), transparent 60%),
+      radial-gradient(1px 1px at 88% 28%, rgba(255,255,255,.55), transparent 60%),
+      radial-gradient(1px 1px at 94% 78%, rgba(255,255,255,.3), transparent 60%),
+      radial-gradient(1px 1px at 6% 62%, rgba(255,255,255,.4), transparent 60%),
+      radial-gradient(1px 1px at 22% 42%, rgba(255,255,255,.3), transparent 60%),
+      radial-gradient(1.5px 1.5px at 49% 19%, rgba(255,255,255,.7), transparent 60%),
+      radial-gradient(1.5px 1.5px at 73% 71%, rgba(255,255,255,.6), transparent 60%),
+      radial-gradient(800px 600px at 65% 50%, rgba(92,240,255,0.035), transparent 70%);
+  }
+
+  #app { position: relative; z-index: 1; width: 100vw; height: 100vh; }
+
+  /* ───────────── globe ───────────── */
+  .stage { position: absolute; inset: 0; display: grid; place-items: center; }
+  .stage canvas { display: block; cursor: grab; touch-action: none; }
+  .stage canvas:active { cursor: grabbing; }
+  .recentre-btn {
+    position: absolute; left: 50%; bottom: max(24px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+    appearance: none; background: rgba(5,7,10,0.7); color: var(--ink);
+    border: 1px solid var(--accent-dim); backdrop-filter: blur(6px);
+    font: 11px/1 var(--mono); letter-spacing: 0.22em; text-transform: uppercase;
+    padding: 12px 18px; cursor: pointer; display: flex; align-items: center; gap: 10px;
+    transition: all 180ms ease; z-index: 50;
+  }
+  .recentre-btn:hover { border-color: var(--accent); box-shadow: 0 0 22px var(--accent-glow); background: rgba(5,7,10,0.85); }
+  .recentre-btn .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: inline-block; box-shadow: 0 0 8px var(--accent); }
+
+  /* ───────────── overlay text ───────────── */
+  .overlay { position: absolute; inset: 0; pointer-events: none; padding: 48px 72px; display: grid; grid-template-rows: auto 1fr auto; gap: 24px; z-index: 2; }
+  /* Text passes pointer events through to the globe; interactive elements re-enable them. */
+  .overlay button, .overlay a, .overlay input, .overlay .pass-btn { pointer-events: auto; }
+
+  .top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .brand { display: flex; align-items: baseline; gap: 14px; }
+  .brand .mark {
+    width: 10px; height: 10px; border-radius: 50%; background: var(--ink);
+    box-shadow: 0 0 0 4px rgba(244,245,247,0.08), 0 0 18px rgba(255,255,255,0.6);
+    align-self: center;
+    animation: pulse 2.2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(244,245,247,0.08), 0 0 18px rgba(255,255,255,0.6); }
+    50% { box-shadow: 0 0 0 7px rgba(244,245,247,0.05), 0 0 26px rgba(255,255,255,0.9); }
+  }
+  .brand .name { font-family: var(--serif); font-size: 22px; letter-spacing: 0.01em; }
+  .brand .name em { font-style: italic; color: var(--accent); }
+  .brand .domain { font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em; color: var(--ink-mute); text-transform: uppercase; }
+
+  .status { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-dim); white-space: nowrap; }
+  .status .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
+  .status.is-loading .dot { background: var(--ink-mute); box-shadow: none; }
+  .status.is-error .dot { background: #ff6b6b; }
+
+  /* ─── middle row: left callout, right telemetry rail ─── */
+  .center { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 80px; }
+
+  /* Left column — headline + CTA only. Sized to fill the left half
+     comfortably; clamps prevent text from sliding under the globe. */
+  .lede { max-width: 560px; display: flex; flex-direction: column; gap: 40px; align-items: flex-start; }
+  .lede .label { font-family: var(--mono); font-size: 12px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--accent); display: flex; align-items: center; gap: 12px; white-space: nowrap; }
+  .lede .label::before { content: ""; width: 24px; height: 1px; background: var(--accent); display: inline-block; flex-shrink: 0; }
+  .lede h1 {
+    font-family: var(--serif); font-weight: 400;
+    font-size: clamp(36px, 3.8vw, 64px); line-height: 1.04; letter-spacing: -0.016em;
+    margin: 0; color: var(--ink); text-wrap: balance;
+  }
+  .lede h1 .miles, .lede h1 .place { color: var(--accent); font-style: italic; white-space: nowrap; }
+
+  /* Inline "Learn more" chip — sits next to the place name. Small,
+     pill-shaped, mono caps + magnifier icon, accent-bordered. */
+  .lede h1 .learn-more {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: var(--mono); font-style: normal; font-size: 11px;
+    letter-spacing: 0.2em; text-transform: uppercase; font-weight: 500;
+    color: var(--accent); background: rgba(92, 240, 255, 0.06);
+    border: 1px solid var(--accent-dim); border-radius: 999px;
+    padding: 6px 12px 6px 10px; margin-left: 14px;
+    text-decoration: none;
+    vertical-align: 0.32em;
+    line-height: 1; cursor: pointer;
+    transition: all 180ms ease; white-space: nowrap;
+  }
+  .lede h1 .learn-more:hover {
+    background: var(--accent); color: #052028;
+    border-color: var(--accent);
+    box-shadow: 0 0 20px var(--accent-glow);
+    transform: translateY(-1px);
+  }
+  .lede h1 .learn-more svg { flex-shrink: 0; }
+  .lede h1 .skel { display: inline-block; min-width: 4ch; background: linear-gradient(90deg, rgba(92,240,255,0.18), rgba(92,240,255,0.05), rgba(92,240,255,0.18)); background-size: 200% 100%; animation: shimmer 1.6s linear infinite; border-radius: 3px; color: transparent; }
+  @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+  /* Right column — vertical telemetry rail. Larger type so the rail
+     reads as a paired column to the headline rather than a sidebar. */
+  .rail { display: flex; flex-direction: column; gap: 0; align-items: stretch; max-width: 520px; justify-self: end; width: 100%; }
+  .rail .stat {
+    display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 16px;
+    padding: 11px 0; border-top: 1px solid var(--hairline);
+  }
+  .rail .stat:last-of-type { border-bottom: 1px solid var(--hairline); }
+  .rail .stat:first-child { border-top: 1px solid var(--accent-dim); }
+  .rail .stat .k { font-family: var(--mono); font-size: 12px; letter-spacing: 0.22em; color: var(--ink); text-transform: uppercase; }
+  .rail .stat .v { font-family: var(--serif); font-style: italic; font-size: 32px; line-height: 1; color: var(--ink); letter-spacing: -0.015em; white-space: nowrap; }
+  .rail .stat .v .u { font-family: var(--mono); font-style: normal; font-size: 11px; letter-spacing: 0.18em; color: var(--ink-dim); text-transform: uppercase; margin-left: 8px; }
+  .rail .stat.hero { padding: 14px 0 16px; }
+  .rail .stat.hero .k { color: var(--accent); }
+  .rail .stat.hero .v { font-size: 48px; color: var(--accent); }
+  .rail .stat.hero .v .u { color: var(--accent); opacity: 0.7; font-size: 12px; }
+  .rail .footnote { font-family: var(--mono); font-size: 12px; letter-spacing: 0.18em; color: var(--ink); text-transform: uppercase; line-height: 1.7; margin-top: 22px; text-align: right; display: flex; justify-content: flex-end; align-items: center; gap: 18px; flex-wrap: wrap; }
+  .rail .footnote a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-dim); }
+  .rail .footnote a:hover { color: var(--accent); border-color: var(--accent); }
+  .rail .footnote .unit-toggle { display: inline-flex; border: 1px solid var(--accent-dim); border-radius: 0; }
+  .rail .footnote .unit-toggle button {
+    appearance: none; background: transparent; color: var(--ink-dim);
+    font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase;
+    padding: 6px 12px; cursor: pointer; border: none; transition: all 160ms ease;
+  }
+  .rail .footnote .unit-toggle button:hover { color: var(--ink); }
+  .rail .footnote .unit-toggle button.active { background: var(--accent); color: #052028; }
+
+  /* CTA — solid accent fill so it reads as a primary action. */
+  .pass-btn {
+    appearance: none; background: var(--accent); color: #052028; border: 1px solid var(--accent);
+    font-family: var(--mono); font-size: 12px; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase;
+    padding: 18px 30px; cursor: pointer; transition: all 200ms ease;
+    box-shadow: 0 0 36px var(--accent-glow);
+  }
+  .pass-btn:hover { filter: brightness(1.08); box-shadow: 0 0 56px var(--accent-glow); transform: translateY(-1px); }
+  .pass-btn .arrow { display: inline-block; margin-left: 14px; transition: transform 220ms ease; }
+  .pass-btn:hover .arrow { transform: translateX(6px); }
+
+  /* Bottom band is now empty by default — Re-centre lives outside the
+     overlay, footer chrome moved into the rail. */
+  .bottom { min-height: 8px; }
+
+  /* responsive — mobile-only adjustments. None of these affect the
+     desktop layout (everything is scoped inside the media query, and the
+     `env(safe-area-inset-*)` values resolve to 0 on non-notched devices). */
+  @media (max-width: 900px) {
+    /* Pad with safe-area insets so the overlay clears iOS notches / home
+       indicator / Android gesture areas. */
+    .overlay {
+      padding: max(22px, env(safe-area-inset-top))
+               max(22px, env(safe-area-inset-right))
+               max(22px, env(safe-area-inset-bottom))
+               max(22px, env(safe-area-inset-left));
+      gap: 18px;
+    }
+    .center { grid-template-columns: 1fr; gap: 28px; }
+    .lede { max-width: 100%; gap: 28px; }
+    .lede h1 .place { white-space: normal; }     /* long ocean names may wrap */
+    .lede h1 .learn-more { white-space: nowrap; } /* chip stays as a unit */
+    .rail { max-width: 100%; justify-self: stretch; }
+    .rail .footnote { text-align: left; justify-content: flex-start; }
+
+    /* Brand and live-status stack on narrow viewports so neither truncates. */
+    .top { flex-wrap: wrap; gap: 12px 16px; }
+    .status { width: auto; }
+
+    /* Tap targets bumped to ≥44px so they're comfortable on touch. */
+    .rail .footnote .unit-toggle button { padding: 12px 18px; font-size: 12px; min-height: 44px; }
+    .pass-btn { padding: 18px 28px; min-height: 52px; }
+
+    /* Pass-times modal trims padding and shrinks heading for phone widths. */
+    .panel { padding: 28px 22px; max-height: calc(100dvh - 32px); overflow-y: auto; }
+    .panel header { margin-bottom: 20px; }
+    .panel h2 { font-size: 28px; }
+    .panel .close { padding: 12px 14px; font-size: 12px; min-height: 44px; min-width: 44px; }
+    .panel .loc { font-size: 11px; gap: 10px; flex-wrap: wrap; }
+    .panel .loc .change { min-height: 44px; display: inline-flex; align-items: center; }
+
+    /* Pass list compresses index column and date type. */
+    .pass-list li { grid-template-columns: 36px 1fr auto; gap: 14px; padding: 16px 0; }
+    .pass-list li .date { font-size: 19px; }
+    .pass-list li .meta { font-size: 11px; }
+
+    /* Location prompt: full-width input + button, stacked. */
+    .loc-prompt .row { flex-wrap: wrap; }
+    .loc-prompt .combobox { width: 100%; min-width: 0; }
+    .loc-prompt button { width: 100%; min-height: 48px; }
+    .loc-prompt .suggestions { max-height: min(280px, 50dvh); }
+  }
+
+  /* Coarse-pointer fallback — catches tablets in landscape that exceed
+     900px but still need finger-sized targets. */
+  @media (pointer: coarse) {
+    .rail .footnote .unit-toggle button { min-height: 44px; padding: 12px 16px; }
+    .panel .close { min-height: 44px; min-width: 44px; }
+  }
+
+  /* ───────────── pass times panel ───────────── */
+  .panel-scrim { position: absolute; inset: 0; background: rgba(5, 7, 10, 0.7); backdrop-filter: blur(6px); z-index: 10; display: grid; place-items: center; opacity: 0; pointer-events: none; transition: opacity 240ms ease; }
+  .panel-scrim.open { opacity: 1; pointer-events: auto; }
+  .panel { width: min(640px, 92vw); background: var(--bg-2); border: 1px solid var(--hairline); padding: 40px 44px; transform: translateY(8px); transition: transform 240ms ease; }
+  .panel-scrim.open .panel { transform: translateY(0); }
+  .panel header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 28px; }
+  .panel h2 { font-family: var(--serif); font-weight: 400; font-size: 36px; margin: 0; letter-spacing: -0.01em; }
+  .panel h2 em { font-style: italic; color: var(--accent); }
+  .panel .close { background: none; border: none; color: var(--ink-dim); font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em; cursor: pointer; text-transform: uppercase; padding: 4px 8px; }
+  .panel .close:hover { color: var(--ink); }
+  .panel .loc { font-family: var(--mono); font-size: 12px; letter-spacing: 0.18em; color: var(--ink-dim); text-transform: uppercase; margin-bottom: 18px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .panel .loc .where { color: var(--ink); font-weight: 500; }
+  .panel .loc .change { color: var(--accent); background: none; border: none; font: inherit; cursor: pointer; padding: 0; letter-spacing: 0.18em; }
+  .panel .loc .change:hover { text-decoration: underline; }
+
+  /* Timezone segmented toggle inside the pass-times panel. Sits below the
+     "Observing from" line. Active segment fills with accent. */
+  .panel .tz-toggle {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    margin-bottom: 26px; font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+  }
+  .panel .tz-toggle .tz-label { color: var(--ink-mute); }
+  .panel .tz-toggle button {
+    appearance: none; background: transparent; color: var(--ink-dim);
+    border: 1px solid var(--hairline); border-radius: 999px;
+    font: inherit; padding: 8px 14px; cursor: pointer;
+    transition: all 160ms ease; letter-spacing: 0.18em;
+  }
+  .panel .tz-toggle button:hover { color: var(--ink); border-color: var(--accent-dim); }
+  .panel .tz-toggle button.active { background: var(--accent); color: #052028; border-color: var(--accent); }
+  .panel .loc .change { color: var(--accent); background: none; border: none; font: inherit; cursor: pointer; padding: 0; letter-spacing: 0.18em; }
+  .panel .loc .change:hover { text-decoration: underline; }
+
+  .pass-list { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--hairline); }
+  .pass-list li { display: grid; grid-template-columns: 56px 1fr auto; gap: 20px; align-items: center; padding: 18px 0; border-bottom: 1px solid var(--hairline); }
+  .pass-list li .idx { font-family: var(--mono); font-size: 11px; color: var(--ink-mute); letter-spacing: 0.18em; }
+  .pass-list li .when { display: flex; flex-direction: column; gap: 4px; }
+  .pass-list li .date { font-family: var(--serif); font-size: 22px; color: var(--ink); }
+  .pass-list li .rel { font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; color: var(--ink); text-transform: uppercase; }
+  .pass-list li .meta { text-align: right; font-family: var(--mono); font-size: 12px; color: var(--ink); letter-spacing: 0.06em; line-height: 1.6; }
+  .pass-list li .meta .elev { color: var(--accent); font-weight: 500; }
+  .pass-list li .meta .dir { color: var(--accent); font-weight: 500; }
+
+  .panel .visibility-note { font-family: var(--mono); font-size: 11px; color: var(--ink-dim); letter-spacing: 0.14em; text-transform: uppercase; margin-top: 22px; line-height: 1.7; }
+
+  /* location prompt */
+  .loc-prompt { display: grid; gap: 18px; padding: 24px 0; }
+  .loc-prompt .pq { font-family: var(--serif); font-size: 22px; color: var(--ink); }
+  .loc-prompt .pq em { font-style: italic; color: var(--accent); }
+  .loc-prompt .row { display: flex; gap: 12px; }
+  .loc-prompt input {
+    flex: 1; background: transparent; border: 1px solid var(--hairline); color: var(--ink);
+    padding: 12px 14px; font: 12px/1 var(--mono); letter-spacing: 0.06em; outline: none;
+  }
+  .loc-prompt input:focus { border-color: var(--accent-dim); }
+  .loc-prompt button {
+    background: var(--accent); color: #052028; border: none; font: 13px/1 var(--mono); font-weight: 600;
+    letter-spacing: 0.2em; text-transform: uppercase; padding: 16px 18px; cursor: pointer;
+  }
+  .loc-prompt button.ghost { background: transparent; color: var(--ink); border: 1px solid var(--accent-dim); font-weight: 500; }
+  .loc-prompt button:hover { filter: brightness(1.08); box-shadow: 0 0 20px var(--accent-glow); }
+  .loc-prompt .or { font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; color: var(--ink-mute); text-transform: uppercase; text-align: center; margin: 4px 0; }
+  .loc-prompt .combobox { position: relative; flex: 1; }
+  .loc-prompt .combobox input { width: 100%; }
+  .loc-prompt .suggestions {
+    position: absolute; left: 0; right: 0; top: calc(100% + 4px); margin: 0; padding: 6px 0;
+    list-style: none; background: var(--bg-2); border: 1px solid var(--accent-dim);
+    max-height: 280px; overflow-y: auto; z-index: 20; box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+  }
+  .loc-prompt .suggestions li {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+    padding: 9px 14px; cursor: pointer; font-family: var(--mono); font-size: 12px;
+    color: var(--ink); transition: background 120ms ease;
+  }
+  .loc-prompt .suggestions li.hi { background: rgba(92, 240, 255, 0.12); }
+  .loc-prompt .suggestions li .name { color: var(--ink); }
+  .loc-prompt .suggestions li.hi .name { color: var(--accent); }
+  .loc-prompt .suggestions li .country { font-size: 10px; letter-spacing: 0.16em; color: var(--ink-mute); text-transform: uppercase; }
