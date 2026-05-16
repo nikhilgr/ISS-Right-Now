@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import * as ISS from "./iss";
 
@@ -431,4 +431,3 @@ export function Globe({ iss, propagator, observer, observerVisible, accent = "#5
 
   return <div ref={wrapRef} style={{ position: "absolute", inset: 0 }} />;
 }
-

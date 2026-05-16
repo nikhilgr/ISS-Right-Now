@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { CITIES } from "./cities";
 import { Globe } from "./Globe";
 import * as ISS from "./iss";
