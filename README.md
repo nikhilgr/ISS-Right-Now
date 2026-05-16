@@ -82,6 +82,19 @@ Connect the GitHub repository to Cloudflare Pages with:
 
 No server runtime or environment variables are required for the current app.
 
+## Cloudflare Workers Static Assets
+
+If the project is deployed with Wrangler instead of the Pages static uploader, this repo includes `wrangler.toml` so `npx wrangler deploy` serves the built Vite output from `dist/`.
+
+Use:
+
+```bash
+pnpm run build
+npx wrangler deploy
+```
+
+The Wrangler configuration points static assets at `./dist` and uses SPA fallback handling.
+
 ## Notes
 
 - The app is intentionally static and client-side.
