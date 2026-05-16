@@ -161,6 +161,38 @@
      overlay, footer chrome moved into the rail. */
   .bottom { min-height: 8px; }
 
+  /* Compact desktop/laptop layout. These breakpoints keep the overlay
+     outside the globe before the single-column mobile layout takes over. */
+  @media (max-width: 1700px) and (min-width: 901px) {
+    .overlay { padding: 42px 54px; gap: 20px; }
+    .center { gap: 48px; }
+    .lede { max-width: 430px; gap: 30px; }
+    .lede .label { font-size: 11px; letter-spacing: 0.24em; }
+    .lede h1 { font-size: clamp(34px, 3.05vw, 48px); line-height: 1.08; }
+    .lede h1 .learn-more { margin-left: 0; margin-top: 12px; }
+    .pass-btn { padding: 16px 26px; font-size: 11px; }
+
+    .rail { max-width: 400px; }
+    .rail .stat { padding: 9px 0; gap: 12px; }
+    .rail .stat .k { font-size: 10px; letter-spacing: 0.2em; }
+    .rail .stat .v { font-size: 27px; }
+    .rail .stat.hero .v { font-size: 40px; }
+    .rail .footnote { font-size: 10px; gap: 12px; margin-top: 18px; }
+    .rail .footnote .unit-toggle button { font-size: 10px; padding: 6px 10px; }
+  }
+
+  @media (max-width: 1350px) and (min-width: 901px) {
+    .overlay { padding: 34px 42px; }
+    .center { gap: 36px; }
+    .lede { max-width: 380px; gap: 26px; }
+    .lede h1 { font-size: clamp(31px, 3vw, 40px); }
+    .rail { max-width: 350px; }
+    .rail .stat .v { font-size: 24px; }
+    .rail .stat.hero .v { font-size: 34px; }
+    .brand .name { font-size: 20px; }
+    .brand .domain, .status { font-size: 10px; }
+  }
+
   /* responsive — mobile-only adjustments. None of these affect the
      desktop layout (everything is scoped inside the media query, and the
      `env(safe-area-inset-*)` values resolve to 0 on non-notched devices). */
