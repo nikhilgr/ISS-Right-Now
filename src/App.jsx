@@ -325,6 +325,15 @@ function App() {
   const [observer, setObserver, clearObserver] = useObserver();
   const [passPanel, setPassPanel] = useState(false);
   const [followingISS, setFollowingISS] = useState(true);
+  const [isMobileLayout, setIsMobileLayout] = useState(() => window.matchMedia("(max-width: 900px)").matches);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 900px)");
+    const update = () => setIsMobileLayout(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
 
   // poll ISS position
   useEffect(() => {
@@ -403,8 +412,26 @@ function App() {
   const miNode = iss ? <span className="miles">{fmt(altDisplay)} {altUnit}</span> : <span className="miles skel">—— mi</span>;
 
   // ── render ──
+  const renderGlobe = () => (
+    <Globe
+      iss={issNow}
+      propagator={propagator}
+      observer={settings.showObserver ? observer : null}
+      observerVisible={settings.showObserver}
+      accent={ACCENT}
+      following={followingISS}
+      onDragStart={() => setFollowingISS(false)}
+    />
+  );
+
   return (
     <>
+      {!isMobileLayout && (
+        <div className="stage stage-desktop">
+          {renderGlobe()}
+        </div>
+      )}
+
       {!followingISS && (
         <button
           className="recentre-btn"
@@ -461,17 +488,11 @@ function App() {
             </button>
           </div>
 
-          <div className="stage">
-            <Globe
-              iss={issNow}
-              propagator={propagator}
-              observer={settings.showObserver ? observer : null}
-              observerVisible={settings.showObserver}
-              accent={ACCENT}
-              following={followingISS}
-              onDragStart={() => setFollowingISS(false)}
-            />
-          </div>
+          {isMobileLayout && (
+            <div className="stage stage-mobile">
+              {renderGlobe()}
+            </div>
+          )}
 
           <aside className="rail">
             <div className="stat hero">

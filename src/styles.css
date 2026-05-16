@@ -40,7 +40,8 @@
 
   /* ───────────── globe ───────────── */
   .stage { position: absolute; inset: 0; display: grid; place-items: center; z-index: 0; }
-  .stage canvas { display: block; cursor: grab; touch-action: none; }
+  .stage-mobile { display: none; }
+  .stage canvas { display: block; cursor: grab; touch-action: none; pointer-events: auto; }
   .stage canvas:active { cursor: grabbing; }
   .recentre-btn {
     position: absolute; left: 50%; bottom: max(24px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
@@ -200,6 +201,7 @@
   @media (max-width: 900px) {
     html, body { height: auto; min-height: 100%; overflow-x: hidden; overflow-y: auto; }
     #app { width: 100%; min-height: 100dvh; height: auto; overflow: hidden; }
+    .stage-desktop { display: none; }
     .stage {
       position: relative;
       inset: auto;
@@ -210,6 +212,7 @@
       z-index: 1;
       pointer-events: auto;
     }
+    .stage-mobile { display: grid; }
     .stage canvas { max-width: 100%; touch-action: pan-y; }
 
     /* Pad with safe-area insets so the overlay clears iOS notches / home
