@@ -449,7 +449,7 @@ function App() {
             <div className="mark" />
             <div>
               <div className="name">ISS Right <em>Now</em></div>
-              <div className="domain">issrightnow.space</div>
+              <div className="domain">issrightnow.app</div>
             </div>
           </div>
           <div className={`status ${status === "loading" ? "is-loading" : status === "error" ? "is-error" : ""}`}>
@@ -463,7 +463,6 @@ function App() {
         {/* middle */}
         <div className="center">
           <div className="lede">
-            <div className="label">Live · Right now</div>
             <h1>
               The International Space Station is {miNode} {placePrefix} {placeNode}
               {searchTerm && (

@@ -87,8 +87,6 @@
   /* Left column — headline + CTA only. Sized to fill the left half
      comfortably; clamps prevent text from sliding under the globe. */
   .lede { max-width: 560px; display: flex; flex-direction: column; gap: 40px; align-items: flex-start; }
-  .lede .label { font-family: var(--mono); font-size: 12px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--accent); display: flex; align-items: center; gap: 12px; white-space: nowrap; }
-  .lede .label::before { content: ""; width: 24px; height: 1px; background: var(--accent); display: inline-block; flex-shrink: 0; }
   .lede h1 {
     font-family: var(--serif); font-weight: 400;
     font-size: clamp(36px, 3.8vw, 64px); line-height: 1.04; letter-spacing: -0.016em;
@@ -169,7 +167,6 @@
     .overlay { padding: 42px 54px; gap: 20px; }
     .center { gap: 48px; }
     .lede { max-width: 430px; gap: 30px; }
-    .lede .label { font-size: 11px; letter-spacing: 0.24em; }
     .lede h1 { font-size: clamp(34px, 3.05vw, 48px); line-height: 1.08; }
     .lede h1 .learn-more { margin-left: 0; margin-top: 12px; }
     .pass-btn { padding: 16px 26px; font-size: 11px; }
@@ -244,7 +241,6 @@
       align-items: stretch;
     }
     .lede { max-width: 100%; gap: 20px; }
-    .lede .label { font-size: 11px; letter-spacing: 0.24em; }
     .lede h1 {
       font-size: clamp(36px, 11.2vw, 50px);
       line-height: 1.05;
@@ -365,7 +361,6 @@
       grid-area: lede;
       gap: 16px;
     }
-    .lede .label { font-size: 10px; }
     .lede h1 {
       font-size: clamp(28px, 6vw, 40px);
       line-height: 1.05;
