@@ -489,7 +489,7 @@ function App() {
           </div>
 
           {isMobileLayout && (
-            <>
+            <div className="mobile-globe-block">
               <div className="stage stage-mobile">
                 {renderGlobe()}
               </div>
@@ -502,7 +502,7 @@ function App() {
                   <span className="dot" /> Re-centre on ISS
                 </button>
               )}
-            </>
+            </div>
           )}
 
           <aside className="rail">
