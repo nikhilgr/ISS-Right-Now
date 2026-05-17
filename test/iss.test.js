@@ -5,6 +5,7 @@ import {
   buildPropagator,
   elevationDeg,
   fetchISSNow,
+  geographicFeature,
   nearestCity,
   nextPasses,
 } from "../src/iss";
@@ -64,6 +65,25 @@ describe("ISS helpers", () => {
     expect(city.name).toBe("Los Angeles");
     expect(city.country).toBe("United States");
     expect(city.distanceKm).toBeLessThan(10);
+  });
+
+  it("returns specific natural feature labels and search queries", () => {
+    expect(geographicFeature(23.5, 12)).toEqual({
+      label: "the Sahara Desert",
+      searchQuery: "Sahara Desert, North Africa",
+    });
+    expect(geographicFeature(39.5, 101)).toEqual({
+      label: "the Gobi Desert",
+      searchQuery: "Gobi Desert, Mongolia and China",
+    });
+    expect(geographicFeature(-22.5, -70)).toEqual({
+      label: "the Atacama Desert",
+      searchQuery: "Atacama Desert, Chile",
+    });
+    expect(geographicFeature(-20, -145)).toEqual({
+      label: "the South Pacific Ocean",
+      searchQuery: "South Pacific Ocean",
+    });
   });
 
   it("returns a high elevation when the ISS is overhead", () => {

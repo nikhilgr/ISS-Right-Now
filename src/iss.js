@@ -129,6 +129,95 @@ function nearestCity(lat, lon) {
   return { name: best[0], country: best[1], lat: best[2], lon: best[3], distanceKm: bestD };
 }
 
+function geographicFeature(lat, lon) {
+  if (lat == null || lon == null) return { label: "the open ocean", searchQuery: "open ocean, Earth" };
+  lon = ((lon + 540) % 360) - 180;
+  const inBox = (latMin, latMax, lonMin, lonMax) =>
+    lat >= latMin && lat <= latMax && lon >= lonMin && lon <= lonMax;
+  const feature = (label, searchQuery) => ({ label, searchQuery });
+
+  // Major mountain ranges, plateaus, and deserts. These come before ocean
+  // basins so inland locations get meaningful natural-feature labels.
+  if (inBox(26, 36, 70, 96)) return feature("the Himalayas", "Himalayas mountain range, Asia");
+  if (inBox(26, 38, 78, 100)) return feature("the Tibetan Plateau", "Tibetan Plateau, Asia");
+  if (inBox(38, 50, 88, 122)) return feature("the Gobi Desert", "Gobi Desert, Mongolia and China");
+  if (inBox(36, 42, 76, 91)) return feature("the Taklamakan Desert", "Taklamakan Desert, Xinjiang, China");
+  if (inBox(24, 32, 68, 76)) return feature("the Thar Desert", "Thar Desert, India and Pakistan");
+  if (inBox(18, 33, -17, 35)) return feature("the Sahara Desert", "Sahara Desert, North Africa");
+  if (inBox(11, 23, 35, 60)) return feature("the Arabian Desert", "Arabian Desert, Arabian Peninsula");
+  if (inBox(10, 24, 10, 25)) return feature("the Sahel", "Sahel region, Africa");
+  if (inBox(27, 36, -12, 12)) return feature("the Atlas Mountains", "Atlas Mountains, North Africa");
+  if (inBox(-6, 14, 34, 48)) return feature("the Ethiopian Highlands", "Ethiopian Highlands, Ethiopia");
+  if (inBox(-30, -15, 12, 18)) return feature("the Namib Desert", "Namib Desert, Namibia");
+  if (inBox(-30, -17, 17, 30)) return feature("the Kalahari Desert", "Kalahari Desert, Southern Africa");
+  if (inBox(-12, 8, -78, -50)) return feature("the Amazon Basin", "Amazon Basin, South America");
+  if (inBox(-32, -18, -75, -66)) return feature("the Atacama Desert", "Atacama Desert, Chile");
+  if (inBox(-56, 12, -79, -66)) return feature("the Andes", "Andes mountain range, South America");
+  if (inBox(-52, -35, -75, -62)) return feature("the Patagonian Desert", "Patagonian Desert, Argentina");
+  if (inBox(31, 37, -121, -114)) return feature("the Mojave Desert", "Mojave Desert, United States");
+  if (inBox(25, 34, -116, -107)) return feature("the Sonoran Desert", "Sonoran Desert, United States and Mexico");
+  if (inBox(25, 36, -109, -101)) return feature("the Chihuahuan Desert", "Chihuahuan Desert, North America");
+  if (inBox(36, 43, -120, -112)) return feature("the Great Basin Desert", "Great Basin Desert, United States");
+  if (inBox(31, 60, -125, -103)) return feature("the Rocky Mountains", "Rocky Mountains, North America");
+  if (inBox(43, 48, 5, 16)) return feature("the Alps", "Alps mountain range, Europe");
+  if (inBox(-36, -24, 120, 135)) return feature("the Great Victoria Desert", "Great Victoria Desert, Australia");
+  if (inBox(-30, -21, 135, 146)) return feature("the Simpson Desert", "Simpson Desert, Australia");
+  if (inBox(-35, -20, 113, 138)) return feature("the Australian Outback", "Australian Outback");
+  if (inBox(40, 60, -120, -90)) return feature("the Canadian interior", "Canadian interior, Canada");
+  if (inBox(35, 55, 50, 88)) return feature("Central Asia", "Central Asia");
+  if (inBox(55, 75, 30, 180)) return feature("Siberia", "Siberia, Russia");
+  if (inBox(22, 40, 100, 122)) return feature("inland China", "inland China");
+
+  // Enclosed / marginal seas.
+  if (inBox(30, 46, -6, 36)) return feature("the Mediterranean Sea", "Mediterranean Sea");
+  if (inBox(40, 47, 27, 42)) return feature("the Black Sea", "Black Sea");
+  if (inBox(36, 47, 46, 55)) return feature("the Caspian Sea", "Caspian Sea");
+  if (inBox(12, 30, 32, 44)) return feature("the Red Sea", "Red Sea");
+  if (inBox(24, 30, 48, 57)) return feature("the Persian Gulf", "Persian Gulf");
+  if (inBox(0, 25, 50, 78)) return feature("the Arabian Sea", "Arabian Sea");
+  if (inBox(5, 22, 78, 100)) return feature("the Bay of Bengal", "Bay of Bengal");
+  if (inBox(50, 60, 10, 32)) return feature("the Baltic Sea", "Baltic Sea");
+  if (inBox(51, 62, -4, 11)) return feature("the North Sea", "North Sea");
+  if (inBox(62, 75, -5, 18)) return feature("the Norwegian Sea", "Norwegian Sea");
+  if (inBox(68, 82, 18, 65)) return feature("the Barents Sea", "Barents Sea");
+  if (inBox(72, 84, -22, 18)) return feature("the Greenland Sea", "Greenland Sea");
+  if (inBox(50, 66, -97, -76)) return feature("Hudson Bay", "Hudson Bay, Canada");
+  if (inBox(56, 72, -170, -156)) return feature("the Bering Sea", "Bering Sea");
+  if (inBox(45, 60, 135, 165)) return feature("the Sea of Okhotsk", "Sea of Okhotsk");
+  if (inBox(33, 52, 128, 142)) return feature("the Sea of Japan", "Sea of Japan");
+  if (inBox(24, 38, 117, 130)) return feature("the East China Sea", "East China Sea");
+  if (inBox(0, 24, 100, 122)) return feature("the South China Sea", "South China Sea");
+  if (inBox(10, 33, 121, 145)) return feature("the Philippine Sea", "Philippine Sea");
+  if (inBox(-12, 7, 105, 125)) return feature("the Java Sea", "Java Sea");
+  if (inBox(-9, 0, 122, 135)) return feature("the Banda Sea", "Banda Sea");
+  if (inBox(-7, 12, 130, 152)) return feature("the Bismarck Sea", "Bismarck Sea");
+  if (inBox(-26, -9, 142, 160)) return feature("the Coral Sea", "Coral Sea");
+  if (inBox(-50, -28, 145, 175)) return feature("the Tasman Sea", "Tasman Sea");
+  if (inBox(-22, -10, 30, 52)) return feature("the Mozambique Channel", "Mozambique Channel");
+  if (inBox(13, 30, -98, -80)) return feature("the Gulf of Mexico", "Gulf of Mexico");
+  if (inBox(8, 23, -88, -60)) return feature("the Caribbean Sea", "Caribbean Sea");
+  if (inBox(50, 75, -90, -50)) return feature("the Labrador Sea", "Labrador Sea");
+
+  if (lat > 66) return feature("the Arctic Ocean", "Arctic Ocean");
+  if (lat < -60) return feature("the Southern Ocean", "Southern Ocean");
+  if (lon >= 20 && lon <= 100 && lat < 30) {
+    if (lat < -30) return feature("the Southern Indian Ocean", "Southern Indian Ocean");
+    return feature("the Indian Ocean", "Indian Ocean");
+  }
+  if (lon > 100 || lon < -70) {
+    if (lat > 30) return feature("the North Pacific Ocean", "North Pacific Ocean");
+    if (lat < -10) return feature("the South Pacific Ocean", "South Pacific Ocean");
+    if (lon < -100 && lat > 0 && lat < 30) return feature("the Eastern Pacific Ocean", "Eastern Pacific Ocean");
+    return feature("the Equatorial Pacific Ocean", "Equatorial Pacific Ocean");
+  }
+  if (lon >= -70 && lon <= 20) {
+    if (lat > 30) return feature("the North Atlantic Ocean", "North Atlantic Ocean");
+    if (lat < 0) return feature("the South Atlantic Ocean", "South Atlantic Ocean");
+    return feature("the Equatorial Atlantic Ocean", "Equatorial Atlantic Ocean");
+  }
+  return feature("the open ocean", "open ocean, Earth");
+}
+
 // Compute "is this point currently within view of (obsLat, obsLon)?" given
 // the ISS altitude, using a spherical-Earth elevation angle.
 function elevationDeg(obsLat, obsLon, issLat, issLon, altKm = ISS_ALT_KM) {
@@ -207,6 +296,7 @@ export {
   buildPropagator,
   sampleTrack,
   nearestCity,
+  geographicFeature,
   greatCircleKm,
   elevationDeg,
   nextPasses,

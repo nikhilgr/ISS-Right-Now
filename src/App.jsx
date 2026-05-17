@@ -189,94 +189,6 @@ function fmtDuration(s) {
   return `${m}m ${sec.toString().padStart(2,"0")}s`;
 }
 
-// Rough ocean / sea label for places far from any city. Approximate — used
-// only when the nearest baked-in city is >700 km away. Ordered from most
-// specific (enclosed seas, gulfs) to most general (open ocean basins).
-function oceanName(lat, lon) {
-  if (lat == null || lon == null) return "the open ocean";
-  // Normalize lon to [-180, 180]
-  lon = ((lon + 540) % 360) - 180;
-  const inBox = (latMin, latMax, lonMin, lonMax) =>
-    lat >= latMin && lat <= latMax && lon >= lonMin && lon <= lonMax;
-
-  // ── Enclosed / marginal seas (most specific first) ──
-  if (inBox(30, 46, -6, 36)) return "the Mediterranean Sea";
-  if (inBox(40, 47, 27, 42)) return "the Black Sea";
-  if (inBox(36, 47, 46, 55)) return "the Caspian Sea";
-  if (inBox(12, 30, 32, 44)) return "the Red Sea";
-  if (inBox(24, 30, 48, 57)) return "the Persian Gulf";
-  if (inBox(0, 25, 50, 78))  return "the Arabian Sea";
-  if (inBox(5, 22, 78, 100)) return "the Bay of Bengal";
-  if (inBox(50, 60, 10, 32)) return "the Baltic Sea";
-  if (inBox(51, 62, -4, 11)) return "the North Sea";
-  if (inBox(62, 75, -5, 18)) return "the Norwegian Sea";
-  if (inBox(68, 82, 18, 65)) return "the Barents Sea";
-  if (inBox(72, 84, -22, 18)) return "the Greenland Sea";
-  if (inBox(50, 66, -97, -76)) return "Hudson Bay";
-  if (inBox(56, 72, -170, -156)) return "the Bering Sea";
-  if (inBox(45, 60, 135, 165)) return "the Sea of Okhotsk";
-  if (inBox(33, 52, 128, 142)) return "the Sea of Japan";
-  if (inBox(24, 38, 117, 130)) return "the East China Sea";
-  if (inBox(0, 24, 100, 122))  return "the South China Sea";
-  if (inBox(10, 33, 121, 145)) return "the Philippine Sea";
-  if (inBox(-12, 7, 105, 125)) return "the Java Sea";
-  if (inBox(-9, 0, 122, 135))  return "the Banda Sea";
-  if (inBox(-7, 12, 130, 152)) return "the Bismarck Sea";
-  if (inBox(-26, -9, 142, 160)) return "the Coral Sea";
-  if (inBox(-50, -28, 145, 175)) return "the Tasman Sea";
-  if (inBox(-22, -10, 30, 52)) return "the Mozambique Channel";
-  if (inBox(13, 30, -98, -80)) return "the Gulf of Mexico";
-  if (inBox(8, 23, -88, -60))  return "the Caribbean Sea";
-  if (inBox(50, 75, -90, -50)) return "the Labrador Sea";
-  if (inBox(35, 70, -75, -10) && lat > 40 && lat < 65 && lon < -25) return "the North Atlantic Ocean";
-
-  // ── Continental interiors ──
-  // Land regions for positions inland that aren't near a city in the
-  // baked-in list. These prevent the open-ocean fallback from labelling
-  // continental territory as the wrong sea. Ordered most-specific first.
-  if (inBox(26, 38, 78, 100))  return "the Tibetan Plateau";
-  if (inBox(38, 50, 88, 122))  return "the Gobi region";
-  if (inBox(22, 40, 100, 122)) return "inland China";
-  if (inBox(35, 55, 50, 88))   return "Central Asia";
-  if (inBox(55, 75, 30, 180))  return "Siberia";
-  if (inBox(18, 30, -10, 35))  return "the Sahara";
-  if (inBox(-30, -10, 14, 32)) return "the Kalahari region";
-  if (inBox(-12, 8, -78, -50)) return "the Amazon Basin";
-  if (inBox(-35, -20, 113, 138)) return "the Australian Outback";
-  if (inBox(40, 60, -120, -90)) return "the Canadian interior";
-
-  // ── Major ocean basins ──
-  if (lat > 66)  return "the Arctic Ocean";
-  if (lat < -60) return "the Southern Ocean";
-
-  // Indian Ocean — roughly 20°E…100°E, south of Asia. East of ~100°E
-  // belongs to the Pacific (via the marginal sea checks above, then
-  // the Pacific fallback).
-  if (lon >= 20 && lon <= 100 && lat < 30) {
-    if (lat < -30) return "the Southern Indian Ocean";
-    return "the Indian Ocean";
-  }
-
-  // Pacific — east of ~100°E or west of ~-70°W
-  if (lon > 100 || lon < -70) {
-    if (lat > 30)  return "the North Pacific Ocean";
-    if (lat < -10) return "the South Pacific Ocean";
-    if (lon < -100 && lat > 0 && lat < 30) return "the Eastern Pacific Ocean";
-    return "the Equatorial Pacific Ocean";
-  }
-
-  // Atlantic — fallback only for real Atlantic longitudes (-70…+20).
-  // Anywhere else that fell through the marginal-seas and basin checks
-  // is genuinely uncertain (mostly inland land already caught above);
-  // last-resort label avoids picking the wrong ocean.
-  if (lon >= -70 && lon <= 20) {
-    if (lat > 30)  return "the North Atlantic Ocean";
-    if (lat < 0)   return "the South Atlantic Ocean";
-    return "the Equatorial Atlantic Ocean";
-  }
-  return "the open ocean";
-}
-
 // ── observer (user location) hook ────────────────────────────────────────
 function useSettings() {
   const [settings, setSettings] = useState(() => {
@@ -398,14 +310,25 @@ function App() {
   let placeNode = <span className="skel">—————</span>;
   let placePrefix = "above";
   let searchTerm = null;          // name to feed into the Google search CTA
+  let searchLabel = null;
   if (placeBelow) {
     if (placeBelow.ocean) { placeNode = <span className="place">the open ocean</span>; }
-    else if (placeBelow.distanceKm < 120) { placeNode = <span className="place">{placeBelow.name}</span>; searchTerm = placeBelow.name; }
-    else if (placeBelow.distanceKm < 700) { placePrefix = "near"; placeNode = <span className="place">{placeBelow.name}</span>; searchTerm = placeBelow.name; }
+    else if (placeBelow.distanceKm < 120) {
+      placeNode = <span className="place">{placeBelow.name}</span>;
+      searchTerm = `${placeBelow.name}, ${placeBelow.country}`;
+      searchLabel = placeBelow.name;
+    }
+    else if (placeBelow.distanceKm < 700) {
+      placePrefix = "near";
+      placeNode = <span className="place">{placeBelow.name}</span>;
+      searchTerm = `${placeBelow.name}, ${placeBelow.country}`;
+      searchLabel = placeBelow.name;
+    }
     else {
-      const region = oceanName(issNow?.lat, issNow?.lon);
-      placeNode = <span className="place">{region}</span>;
-      searchTerm = region.replace(/^the\s+/i, "");
+      const feature = ISS.geographicFeature(issNow?.lat, issNow?.lon);
+      placeNode = <span className="place">{feature.label}</span>;
+      searchTerm = feature.searchQuery;
+      searchLabel = feature.label;
     }
   }
 
@@ -471,8 +394,8 @@ function App() {
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(searchTerm)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  title={`Learn more about ${searchTerm}`}
-                  aria-label={`Learn more about ${searchTerm} on Google`}
+                  title={`Learn more about ${searchLabel || searchTerm}`}
+                  aria-label={`Learn more about ${searchLabel || searchTerm} on Google`}
                 >
                   <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
                     <circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" strokeWidth="1.4" />
