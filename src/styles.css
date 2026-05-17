@@ -301,14 +301,19 @@
     .loc-prompt button { width: 100%; min-height: 48px; }
     .loc-prompt .suggestions { max-height: min(280px, 50dvh); }
     .recentre-btn {
-      position: fixed;
-      left: 50%;
-      bottom: max(16px, env(safe-area-inset-bottom));
+      position: relative;
+      left: auto;
+      bottom: auto;
+      transform: none;
       padding: 10px 12px;
       font-size: 9px;
       letter-spacing: 0.18em;
       background: rgba(5,7,10,0.82);
       z-index: 60;
+    }
+    .recentre-btn-mobile {
+      align-self: center;
+      margin: -12px 0 24px;
     }
   }
 
@@ -391,7 +396,6 @@
       margin-top: 14px;
     }
     .recentre-btn {
-      bottom: max(12px, env(safe-area-inset-bottom));
       padding: 10px 12px;
     }
   }

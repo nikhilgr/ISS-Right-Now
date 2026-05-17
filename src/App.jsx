@@ -432,7 +432,7 @@ function App() {
         </div>
       )}
 
-      {!followingISS && !passPanel && (
+      {!isMobileLayout && !followingISS && !passPanel && (
         <button
           className="recentre-btn"
           onClick={() => setFollowingISS(true)}
@@ -489,9 +489,20 @@ function App() {
           </div>
 
           {isMobileLayout && (
-            <div className="stage stage-mobile">
-              {renderGlobe()}
-            </div>
+            <>
+              <div className="stage stage-mobile">
+                {renderGlobe()}
+              </div>
+              {!followingISS && !passPanel && (
+                <button
+                  className="recentre-btn recentre-btn-mobile"
+                  onClick={() => setFollowingISS(true)}
+                  title="Re-centre on the ISS"
+                >
+                  <span className="dot" /> Re-centre on ISS
+                </button>
+              )}
+            </>
           )}
 
           <aside className="rail">
