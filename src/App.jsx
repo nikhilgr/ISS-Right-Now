@@ -582,7 +582,7 @@ function PassPanel({ open, onClose, observer, setObserver, clearObserver, propag
       settled = true;
       clearTimeout(guard);
       setBusy(false);
-      if (e && e.code === 1) setErr("Location blocked. Type a city.");
+      if (e && e.code === 1) setErr("Location blocked. Allow location in your browser settings, or type a city.");
     };
 
     try {
