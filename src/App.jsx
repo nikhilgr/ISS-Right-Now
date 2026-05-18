@@ -548,19 +548,17 @@ function PassPanel({ open, onClose, observer, setObserver, clearObserver, propag
   }, [observer, propagator, issNow?.ts]);
 
   const useBrowserLocation = () => {
-    if (!navigator.geolocation) { setErr("Geolocation isn't supported by this browser. Use the city search instead."); return; }
+    if (!navigator.geolocation) return;
     setBusy(true); setErr(null);
 
     // Some embedded contexts (iframes without allow=geolocation, locked-down
     // mobile browsers, denied permissions that never surface) cause
-    // getCurrentPosition to silently never fire either callback. Wrap with
-    // an explicit timer so we always show a clear status to the user.
+    // getCurrentPosition to silently never fire either callback.
     let settled = false;
     const guard = setTimeout(() => {
       if (settled) return;
       settled = true;
       setBusy(false);
-      setErr("Location request timed out. Check your browser's location permission, or type a city below.");
     }, 12000);
 
     const onPos = (pos) => {
@@ -584,12 +582,7 @@ function PassPanel({ open, onClose, observer, setObserver, clearObserver, propag
       settled = true;
       clearTimeout(guard);
       setBusy(false);
-      // Map W3C geolocation error codes to actionable copy.
-      let msg = "Couldn't get your location.";
-      if (e && e.code === 1) msg = "Location permission denied. Click your browser's location icon to allow, or type a city.";
-      else if (e && e.code === 2) msg = "Your device couldn't determine a position. Type a city instead.";
-      else if (e && e.code === 3) msg = "Location request timed out. Try again or type a city.";
-      setErr(msg);
+      if (e && e.code === 1) setErr("Location blocked. Type a city.");
     };
 
     try {
