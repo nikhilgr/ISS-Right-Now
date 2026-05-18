@@ -1,7 +1,18 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import * as amplitude from "@amplitude/unified";
 import { CITIES } from "./cities";
 import { Globe } from "./Globe";
 import * as ISS from "./iss";
+
+function getDeviceContext() {
+  return {
+    screen_width: window.screen.width,
+    screen_height: window.screen.height,
+    device_pixel_ratio: window.devicePixelRatio || 1,
+    is_mobile: window.matchMedia("(max-width: 900px)").matches,
+    user_agent: navigator.userAgent,
+  };
+}
 
 const ACCENT = "#5cf0ff";
 const DEFAULT_SETTINGS = { units: "imperial", showObserver: true };
@@ -258,7 +269,13 @@ function App() {
         setIss(cur => { setPrevIss(cur); return sample; });
         setStatus("live");
       } catch (e) {
-        if (!cancelled) setStatus("error");
+        if (!cancelled) {
+          setStatus("error");
+          amplitude.track("ISS Data Error Encountered", {
+            error_message: e?.message || "unknown",
+            ...getDeviceContext(),
+          });
+        }
       } finally {
         if (!cancelled) timer = setTimeout(tick, POLL_MS);
       }
@@ -343,7 +360,10 @@ function App() {
       observerVisible={settings.showObserver}
       accent={ACCENT}
       following={followingISS}
-      onDragStart={() => setFollowingISS(false)}
+      onDragStart={() => {
+        setFollowingISS(false);
+        amplitude.track("Globe Drag Started", { ...getDeviceContext() });
+      }}
     />
   );
 
@@ -358,7 +378,10 @@ function App() {
       {!isMobileLayout && !followingISS && !passPanel && (
         <button
           className="recentre-btn"
-          onClick={() => setFollowingISS(true)}
+          onClick={() => {
+            setFollowingISS(true);
+            amplitude.track("Globe Recentred", { layout: "desktop", ...getDeviceContext() });
+          }}
           title="Re-centre on the ISS"
         >
           <span className="dot" /> Re-centre on ISS
@@ -396,6 +419,12 @@ function App() {
                   rel="noopener noreferrer"
                   title={`Learn more about ${searchLabel || searchTerm}`}
                   aria-label={`Learn more about ${searchLabel || searchTerm} on Google`}
+                  onClick={() => amplitude.track("Location Clicked", {
+                    place_name: searchLabel || searchTerm,
+                    iss_lat: issNow?.lat,
+                    iss_lon: issNow?.lon,
+                    ...getDeviceContext(),
+                  })}
                 >
                   <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
                     <circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" strokeWidth="1.4" />
@@ -405,7 +434,10 @@ function App() {
                 </a>
               )}
             </h1>
-            <button className="pass-btn" onClick={() => setPassPanel(true)}>
+            <button className="pass-btn" onClick={() => {
+              setPassPanel(true);
+              amplitude.track("Pass Panel Opened", { ...getDeviceContext() });
+            }}>
               Pass times over me <span className="arrow">→</span>
             </button>
           </div>
@@ -418,7 +450,10 @@ function App() {
               {!followingISS && !passPanel && (
                 <button
                   className="recentre-btn recentre-btn-mobile"
-                  onClick={() => setFollowingISS(true)}
+                  onClick={() => {
+                    setFollowingISS(true);
+                    amplitude.track("Globe Recentred", { layout: "mobile", ...getDeviceContext() });
+                  }}
                   title="Re-centre on the ISS"
                 >
                   <span className="dot" /> Re-centre on ISS
@@ -462,13 +497,19 @@ function App() {
                 <button
                   type="button"
                   className={settings.units === "imperial" ? "active" : ""}
-                  onClick={() => setSettings((prev) => ({ ...prev, units: 'imperial' }))}
+                  onClick={() => {
+                    setSettings((prev) => ({ ...prev, units: 'imperial' }));
+                    amplitude.track("Units Changed", { units: "imperial", ...getDeviceContext() });
+                  }}
                   aria-pressed={settings.units === "imperial"}
                 >mi</button>
                 <button
                   type="button"
                   className={settings.units === "metric" ? "active" : ""}
-                  onClick={() => setSettings((prev) => ({ ...prev, units: 'metric' }))}
+                  onClick={() => {
+                    setSettings((prev) => ({ ...prev, units: 'metric' }));
+                    amplitude.track("Units Changed", { units: "metric", ...getDeviceContext() });
+                  }}
                   aria-pressed={settings.units === "metric"}
                 >km</button>
               </span>
@@ -547,6 +588,15 @@ function PassPanel({ open, onClose, observer, setObserver, clearObserver, propag
     } catch (e) { return []; }
   }, [observer, propagator, issNow?.ts]);
 
+  useEffect(() => {
+    if (!open || !observer || passes.length === 0) return;
+    amplitude.track("Pass Times Viewed", {
+      pass_count: passes.length,
+      observer_label: observer.label || null,
+      ...getDeviceContext(),
+    });
+  }, [open, observer, passes.length]);
+
   const useBrowserLocation = () => {
     if (!navigator.geolocation) return;
     setBusy(true); setErr(null);
@@ -575,6 +625,12 @@ function PassPanel({ open, onClose, observer, setObserver, clearObserver, propag
         tzLabel: zi.label,
         label: c ? `${c.name}, ${c.country}` : "your location",
       });
+      amplitude.track("Observer Location Set", {
+        method: "gps",
+        nearest_city: c ? `${c.name}, ${c.country}` : null,
+        location_error: null,
+        ...getDeviceContext(),
+      });
       setBusy(false);
     };
     const onErr = (e) => {
@@ -582,7 +638,14 @@ function PassPanel({ open, onClose, observer, setObserver, clearObserver, propag
       settled = true;
       clearTimeout(guard);
       setBusy(false);
-      if (e && e.code === 1) setErr("Location blocked. Allow location in your browser settings, or type a city.");
+      const blocked = e && e.code === 1;
+      if (blocked) setErr("Location blocked. Allow location in your browser settings, or type a city.");
+      amplitude.track("Observer Location Set", {
+        method: "gps",
+        nearest_city: null,
+        location_error: blocked ? "permission_denied" : "unavailable",
+        ...getDeviceContext(),
+      });
     };
 
     try {
@@ -603,6 +666,12 @@ function PassPanel({ open, onClose, observer, setObserver, clearObserver, propag
       lat: c[2], lon: c[3],
       tzIana: zi.iana, tzOffset: zi.offset, tzLabel: zi.label,
       label: `${c[0]}, ${c[1]}`,
+    });
+    amplitude.track("Observer Location Set", {
+      method: "city_search",
+      nearest_city: `${c[0]}, ${c[1]}`,
+      location_error: null,
+      ...getDeviceContext(),
     });
     setQuery("");
     setHi(0);
@@ -643,7 +712,10 @@ function PassPanel({ open, onClose, observer, setObserver, clearObserver, propag
             <div className="loc">
               <span>Observing from</span>
               <span className="where">{observer.label || `${observer.lat.toFixed(2)}°, ${observer.lon.toFixed(2)}°`}</span>
-              <button className="change" onClick={() => clearObserver()}>Change ↺</button>
+              <button className="change" onClick={() => {
+                clearObserver();
+                amplitude.track("Observer Location Cleared", { ...getDeviceContext() });
+              }}>Change ↺</button>
             </div>
 
             {/* Timezone toggle — pick whether dates render in the viewer's

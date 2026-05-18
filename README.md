@@ -79,8 +79,9 @@ Connect the GitHub repository to Cloudflare Pages with:
 - Install command: `pnpm install --frozen-lockfile`
 - Build command: `pnpm run build`
 - Output directory: `dist`
+- Environment variable: `VITE_AMPLITUDE_API_KEY`
 
-No server runtime or environment variables are required for the current app.
+`VITE_AMPLITUDE_API_KEY` must be set in Cloudflare Pages for production Amplitude tracking. Vite embeds `VITE_*` values at build time, so update the Cloudflare environment variable before redeploying.
 
 ## Cloudflare Workers Static Assets
 

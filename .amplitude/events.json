@@ -1,0 +1,38 @@
+[
+  {
+    "name": "Pass Panel Opened",
+    "description": "User opens the ISS pass times panel for their location."
+  },
+  {
+    "name": "Observer Location Set",
+    "description": "User sets observer location via GPS or city search, capturing method and any errors."
+  },
+  {
+    "name": "Observer Location Cleared",
+    "description": "User clears their observer location from the pass panel."
+  },
+  {
+    "name": "Pass Times Viewed",
+    "description": "User sees the list of upcoming ISS visible passes for their location."
+  },
+  {
+    "name": "Globe Drag Started",
+    "description": "User begins manually dragging/rotating the 3D globe."
+  },
+  {
+    "name": "Globe Recentred",
+    "description": "User clicks the Re-centre button to snap the globe back to the ISS."
+  },
+  {
+    "name": "Units Changed",
+    "description": "User toggles between imperial and metric units."
+  },
+  {
+    "name": "Location Clicked",
+    "description": "User clicks the Learn More link for the place below the ISS."
+  },
+  {
+    "name": "ISS Data Error Encountered",
+    "description": "ISS telemetry feed fails and the app enters an error state."
+  }
+]
