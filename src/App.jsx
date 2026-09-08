@@ -14,7 +14,7 @@ function getDeviceContext() {
   };
 }
 
-const ACCENT = "#5cf0ff";
+const ACCENT = "#8cdeea";
 const DEFAULT_SETTINGS = { units: "imperial", showObserver: true };
 const SETTINGS_KEY = "iss-rightnow.settings";
 
@@ -354,7 +354,7 @@ function App() {
   // ── render ──
   const renderGlobe = () => (
     <Globe
-      iss={issNow}
+      iss={iss}
       propagator={propagator}
       observer={settings.showObserver ? observer : null}
       observerVisible={settings.showObserver}
@@ -462,7 +462,7 @@ function App() {
             </div>
           )}
 
-          <aside className="rail">
+          <aside className="rail" aria-label="Station telemetry">
             <div className="stat hero">
               <div className="k">Speed</div>
               <div className="v">{fmt(speedDisplay)}<span className="u">{speedUnit}</span></div>
@@ -487,12 +487,9 @@ function App() {
               <div className="k">Orbits per day</div>
               <div className="v">16</div>
             </div>
-            <div className="stat">
-              <div className="k">Crew on board</div>
-              <div className="v">7</div>
-            </div>
+
             <div className="footnote">
-              <span>Source · <a href="https://isslivenow.com/" target="_blank" rel="noopener noreferrer">isslivenow.com</a></span>
+              <span>Source · <a href={iss?.source === "open-notify" ? "http://open-notify.org/" : "https://wheretheiss.at/"} target="_blank" rel="noopener noreferrer">{iss?.source === "open-notify" ? "Open Notify" : "Where the ISS at?"}</a></span>
               <span className="unit-toggle" role="group" aria-label="Units">
                 <button
                   type="button"
@@ -699,9 +696,11 @@ function PassPanel({ open, onClose, observer, setObserver, clearObserver, propag
     }
   };
 
+  if (!open) return null;
+
   return (
     <div className={`panel-scrim ${open ? "open" : ""}`} onClick={onClose}>
-      <div className="panel" onClick={e => e.stopPropagation()}>
+      <div className="panel" role="dialog" aria-modal="true" aria-label="Pass times over you" onKeyDown={e => { if (e.key === "Escape") onClose(); }} onClick={e => e.stopPropagation()}>
         <header>
           <h2>Pass times <em>over you</em></h2>
           <button className="close" onClick={onClose}>Close ×</button>

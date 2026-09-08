@@ -52,6 +52,10 @@ export function Globe({ iss, propagator, observer, observerVisible, accent = "#5
   const onDragStartRef = useRef(onDragStart);
   onDragStartRef.current = onDragStart;
 
+  const liveRef = useRef({ iss, propagator });
+  liveRef.current = { iss, propagator };
+  const [renderError, setRenderError] = useState(false);
+
   // Resize observer
   useEffect(() => {
     if (!wrapRef.current) return;
@@ -68,7 +72,9 @@ export function Globe({ iss, propagator, observer, observerVisible, accent = "#5
     if (!wrapRef.current) return;
     const wrap = wrapRef.current;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    let renderer;
+    try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); }
+    catch { setRenderError(true); return; }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(800, 800);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -83,43 +89,14 @@ export function Globe({ iss, propagator, observer, observerVisible, accent = "#5
     scene.add(earthGroup);
 
     // ── Earth ──
-    // Standard NASA Blue Marble texture, with a colour-grade injected into
-    // the shader via onBeforeCompile. Pulling oceans toward a lighter
-    // cyan-blue and lifting land toward white gives the globe a more
-    // illustrative, vibrant feel without dropping into a custom shader.
+    // Preserve Blue Marble surface colours under time-based sunlight.
     const loader = new THREE.TextureLoader();
     loader.setCrossOrigin("anonymous");
     const dayTex = loader.load(TEX_DAY, (t) => { t.colorSpace = THREE.SRGBColorSpace; });
     dayTex.colorSpace = THREE.SRGBColorSpace;
     dayTex.anisotropy = 8;
 
-    const earthMat = new THREE.MeshBasicMaterial({ map: dayTex });
-    earthMat.onBeforeCompile = (shader) => {
-      // Patch the texture-sample step. After diffuseColor is set from the
-      // map, regrade ocean vs land based on the sampled RGB ratios. We work
-      // in linear-light space (what's in diffuseColor.rgb here), so the
-      // tonal lift is perceptually consistent.
-      shader.fragmentShader = shader.fragmentShader.replace(
-        "#include <map_fragment>",
-        `
-        #include <map_fragment>
-        {
-          vec3 c = diffuseColor.rgb;
-          // Ocean dominance: blue ahead of red & green in linear light.
-          float ocean = clamp((c.b - max(c.r, c.g)) * 9.0, 0.0, 1.0);
-          // Target ocean colour — a deeper, more saturated Earth blue
-          // (~#10498F in sRGB / linear (0.0033, 0.072, 0.291)).
-          vec3 oceanTarget = vec3(0.006, 0.080, 0.310);
-          // Pull strongly toward the deep blue, but preserve a touch of the
-          // texture's depth/temperature variation.
-          vec3 oceanCol = mix(c * 1.05, oceanTarget, 0.85);
-          // Land: subtle luminance lift (~10%) — keep continent hues honest.
-          vec3 landCol = mix(c, vec3(1.0), 0.10);
-          diffuseColor.rgb = mix(landCol, oceanCol, ocean);
-        }
-        `
-      );
-    };
+    const earthMat = new THREE.MeshPhongMaterial({ map: dayTex, shininess: 12, specular: new THREE.Color("#24465c") });
     const earth = new THREE.Mesh(
       new THREE.SphereGeometry(EARTH_RADIUS_UNITS, 96, 64),
       earthMat
@@ -156,12 +133,21 @@ export function Globe({ iss, propagator, observer, observerVisible, accent = "#5
     );
     earthGroup.add(limb);
 
-    // (No atmosphere glow — keep the bare-Earth look like the reference image.)
 
-    // ── Lighting ── MeshBasicMaterial ignores lights, but we keep ambient
-    // for the ISS marker / observer ring materials. No directional needed.
-    const ambient = new THREE.AmbientLight(0xffffff, 1.0);
+    // Earth-fixed sunlight tracks the UTC sub-solar point.
+    const ambient = new THREE.AmbientLight(0x8faed1, 1.4);
     scene.add(ambient);
+    const sunlight = new THREE.DirectionalLight(0xfff4df, 2.6);
+    earthGroup.add(sunlight);
+    const atmosphere = new THREE.Mesh(
+      new THREE.SphereGeometry(1.025, 64, 48),
+      new THREE.ShaderMaterial({
+        vertexShader: `varying vec3 n; varying vec3 v; void main(){ n=normalize(normalMatrix*normal); vec4 p=modelViewMatrix*vec4(position,1.); v=normalize(-p.xyz); gl_Position=projectionMatrix*p; }`,
+        fragmentShader: `varying vec3 n; varying vec3 v; void main(){ float rim=pow(1.-abs(dot(normalize(n),normalize(v))),3.); gl_FragColor=vec4(.25,.65,1.,rim*.42); }`,
+        transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      })
+    );
+    earthGroup.add(atmosphere);
 
     // ── ISS marker ──
     const issGroup = new THREE.Group();
@@ -285,17 +271,40 @@ export function Globe({ iss, propagator, observer, observerVisible, accent = "#5
     window.addEventListener("pointercancel", onUp);
 
     // ── Render loop ──
+    const facing = new THREE.Vector3(0, 0, 1);
+    const direction = new THREE.Vector3();
+    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let lastSun = 0;
     let raf;
     let last = performance.now();
     const tick = () => {
       const now = performance.now();
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
+      const live = liveRef.current;
+      if (live.iss) {
+        const point = live.propagator ? live.propagator(Date.now() / 1000) : live.iss;
+        issGroup.position.copy(latLonToVec3(point.lat, point.lon, ALT_UNITS(live.iss.alt ?? 408)));
+        if (followingRef.current && !dragging) {
+          targetQuat.setFromUnitVectors(direction.copy(issGroup.position).normalize(), facing);
+          pitch = 0;
+        }
+      }
+      if (now - lastSun > 1000 || !lastSun) {
+        const sun = subSolarPoint(new Date());
+        sunlight.position.copy(latLonToVec3(sun.lat, sun.lon, 10));
+        lastSun = now;
+      }
       // Ease earthGroup quaternion toward targetQuat
-      earthGroup.quaternion.slerp(targetQuat, 1 - Math.pow(0.001, dt));
+      earthGroup.quaternion.slerp(targetQuat, motionQuery.matches ? 1 : 1 - Math.pow(0.001, dt));
       renderer.render(scene, camera);
       raf = requestAnimationFrame(tick);
     };
+    const visibility = () => {
+      cancelAnimationFrame(raf);
+      if (!document.hidden) { last = performance.now(); tick(); }
+    };
+    document.addEventListener("visibilitychange", visibility);
     tick();
 
     // expose for prop-driven updates
@@ -313,8 +322,17 @@ export function Globe({ iss, propagator, observer, observerVisible, accent = "#5
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
+      document.removeEventListener("visibilitychange", visibility);
+      const geometries = new Set(), materials = new Set(), textures = new Set([dayTex, haloTex]);
+      scene.traverse(object => {
+        if (object.geometry) geometries.add(object.geometry);
+        if (object.material) materials.add(object.material);
+      });
+      geometries.forEach(geometry => geometry.dispose());
+      materials.forEach(material => material.dispose());
+      textures.forEach(texture => texture.dispose());
       renderer.dispose();
-      earthMat.dispose(); orbitMat.dispose(); limbMat.dispose(); arrowMat.dispose(); arrowGeo.dispose();
+      stateRef.current = {};
       wrap.removeChild(renderer.domElement);
     };
   }, []);
@@ -322,7 +340,7 @@ export function Globe({ iss, propagator, observer, observerVisible, accent = "#5
   // ── handle resize ──
   useEffect(() => {
     const s = stateRef.current;
-    if (!s.renderer) return;
+    if (!s.renderer || size.w <= 0 || size.h <= 0) return;
     s.renderer.setSize(size.w, size.h);
     const aspect = size.w / size.h;
     s.camera.aspect = aspect;
@@ -343,15 +361,6 @@ export function Globe({ iss, propagator, observer, observerVisible, accent = "#5
     s.orbitMat.color = new THREE.Color(accent);
     if (s.arrowMat) s.arrowMat.color = new THREE.Color(accent);
   }, [accent]);
-
-  // ── place ISS marker each render ──
-  useEffect(() => {
-    const s = stateRef.current;
-    if (!s.issGroup || !iss) return;
-    const r = ALT_UNITS(iss.alt || 408);
-    const p = latLonToVec3(iss.lat, iss.lon, r);
-    s.issGroup.position.copy(p);
-  });
 
   // ── update orbital track when propagator changes ──
   useEffect(() => {
@@ -400,7 +409,7 @@ export function Globe({ iss, propagator, observer, observerVisible, accent = "#5
         arrow.visible = true;
       }
     }
-  }, [iss?.ts, propagator]);
+  }, [propagator]);
 
   // ── observer marker ──
   useEffect(() => {
@@ -416,19 +425,7 @@ export function Globe({ iss, propagator, observer, observerVisible, accent = "#5
     s.obsGroup.rotateY(Math.PI);
   }, [observer?.lat, observer?.lon, observerVisible]);
 
-  // ── auto-follow ISS: while following, drift target rotation so ISS faces camera ──
-  useEffect(() => {
-    const s = stateRef.current;
-    if (!s.targetQuat || !iss) return;
-    if (!following) return;
-    // Build a quaternion that, applied to earthGroup, brings the ISS local
-    // position to the +Z axis (camera-facing).
-    const local = latLonToVec3(iss.lat, iss.lon, 1).normalize();
-    const facing = new THREE.Vector3(0, 0, 1);
-    const q = new THREE.Quaternion().setFromUnitVectors(local, facing);
-    s.targetQuat.copy(q);
-    s.setPitch(0);
-  }, [iss?.lat, iss?.lon, following]);
-
-  return <div ref={wrapRef} style={{ position: "absolute", inset: 0 }} />;
+  return <div ref={wrapRef} role="img" aria-label="Interactive Earth showing the predicted ISS position and orbital path. Drag to rotate." style={{ position: "absolute", inset: 0 }}>
+    {renderError && <p className="globe-error">3D view unavailable. Live telemetry is still available below.</p>}
+  </div>;
 }

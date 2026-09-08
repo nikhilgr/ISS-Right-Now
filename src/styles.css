@@ -645,3 +645,24 @@
       font-size: 25px;
     }
   }
+
+/* Local refresh: preserve the original location / globe / telemetry composition. */
+:root {
+  --bg: #070c12;
+  --bg-2: #101923;
+  --ink: #f1f3ef;
+  --ink-dim: #a1afbd;
+  --ink-mute: #82919f;
+  --accent: #8cdeea;
+  --accent-dim: rgba(140,222,234,.35);
+  --accent-glow: rgba(140,222,234,.12);
+  --sans: Inter, system-ui, -apple-system, sans-serif;
+}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+.pass-btn{font-family:var(--sans);font-weight:500;letter-spacing:.08em;box-shadow:0 0 24px var(--accent-glow);border-radius:4px}
+.panel-scrim{position:fixed}
+.panel{max-height:calc(100dvh - 32px);overflow-y:auto}
+.panel .close{min-height:44px;min-width:44px}
+.globe-error{position:absolute;left:40%;right:40%;top:40%;font:14px/1.6 var(--sans);color:var(--ink-dim);text-align:center}
+@media(max-width:900px){.globe-error{inset:24px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
